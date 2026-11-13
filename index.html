@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<title>Тебе письмо</title>
+<meta name="theme-color" content="#ffe4ee">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Marck+Script&family=Cormorant+Garamond:ital,wght@0,500;1,500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --rose: #e0527a;
+    --rose-deep: #b8335a;
+    --plum: #5a2a45;
+    --petal: #ffc2d6;
+    --lilac: #b79be0;
+    --hand: "Marck Script", "Segoe Script", "Comic Sans MS", cursive;
+    --serif: "Cormorant Garamond", Georgia, serif;
+  }
+  * { box-sizing: border-box; }
+  html { height: 100%; }
+  body {
+    margin: 0; min-height: 100%; overflow-x: hidden;
+    font-family: var(--serif); color: var(--plum);
+    background:
+      radial-gradient(60rem 40rem at 12% 8%, #ffcfe0 0, transparent 60%),
+      radial-gradient(50rem 40rem at 92% 22%, #e6d6ff 0, transparent 58%),
+      radial-gradient(60rem 50rem at 50% 105%, #ffe5d3 0, transparent 62%),
+      #fff1f6;
+    background-attachment: fixed;
+    -webkit-font-smoothing: antialiased;
+  }
+  [hidden] { display: none !important; }
+  :focus-visible { outline: 3px solid var(--rose); outline-offset: 4px; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+  /* ---------- Фон: маленькие сердечки ---------- */
+  .bg-heart {
+    position: fixed; bottom: -8vh; left: var(--l); z-index: 0; pointer-events: none;
+    color: var(--c); font-size: var(--s); opacity: var(--o); line-height: 1;
+    animation: floatUp var(--d) linear var(--dl) infinite;
+  }
+  @keyframes floatUp {
+    from { transform: translate3d(0, 0, 0) rotate(-10deg); }
+    to   { transform: translate3d(var(--x), -118vh, 0) rotate(10deg); }
+  }
+
+  main { position: relative; z-index: 3; min-height: 100vh; min-height: 100svh; display: grid; place-items: center; padding: 1.5rem 1.25rem; }
+  .scene { width: 100%; display: grid; place-items: center; justify-items: center; gap: 1.6rem; padding: 3.5rem 0 2rem; }
+  .scene.enter { animation: sceneIn .8s cubic-bezier(.2, .8, .2, 1) both; }
+  .scene.leave { animation: sceneOut .45s ease forwards; }
+  @keyframes sceneIn { from { opacity: 0; transform: translateY(18px) scale(.97); } }
+  @keyframes sceneOut { to { opacity: 0; transform: translateY(-12px) scale(.98); } }
+
+  /* ---------- Прогресс ---------- */
+  .progress {
+    position: fixed; top: calc(env(safe-area-inset-top, 0px) + 1rem); left: 0; right: 0; z-index: 5;
+    display: flex; justify-content: center; gap: .6rem; pointer-events: none;
+  }
+  .progress span { color: var(--rose); opacity: .28; font-size: 1rem; transition: opacity .4s ease, transform .4s ease; }
+  .progress span.on { opacity: 1; transform: scale(1.35); }
+
+  /* ---------- Конверт ---------- */
+  .intro { display: grid; justify-items: center; gap: 1.8rem; text-align: center; transition: opacity .7s ease, transform .7s ease; }
+  .intro.gone { opacity: 0; transform: scale(.94) translateY(-10px); pointer-events: none; }
+  .to { font-family: var(--hand); font-size: clamp(2.1rem, 9vw, 3rem); margin: 0; line-height: 1.15; }
+  .hint { margin: 0; font-style: italic; font-size: 1.2rem; opacity: .75; }
+  .envelope {
+    position: relative; width: min(78vw, 320px); aspect-ratio: 3 / 2; padding: 0; border: 0; background: none;
+    cursor: pointer; perspective: 900px; filter: drop-shadow(0 20px 28px rgba(224, 82, 122, .3));
+    animation: breathe 3.6s ease-in-out infinite;
+  }
+  .envelope.open { animation: none; }
+  .env-back, .env-front, .env-flap { position: absolute; left: 0; width: 100%; display: block; }
+  .env-back { inset: 0; background: #f2a9c2; border-radius: 8px; }
+  .env-front { inset: 0; background: #ffd3e1; border-radius: 8px; clip-path: polygon(0 0, 50% 54%, 100% 0, 100% 100%, 0 100%); }
+  .env-flap {
+    top: 0; height: 56%; background: #f58fb2; clip-path: polygon(0 0, 100% 0, 50% 100%);
+    transform-origin: top; transition: transform .9s cubic-bezier(.5, 0, .2, 1); z-index: 3;
+  }
+  .envelope.open .env-flap { transform: rotateX(180deg); z-index: 0; }
+  .seal {
+    position: absolute; left: 50%; top: 50%; z-index: 4; width: 48px; height: 48px; margin: -24px 0 0 -24px;
+    border-radius: 50%; background: radial-gradient(circle at 35% 30%, #f0709a, #c93a64); color: #fff;
+    display: grid; place-items: center; font-size: 1.4rem; line-height: 1;
+    box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .15); transition: opacity .35s ease, transform .35s ease;
+  }
+  .envelope.open .seal { opacity: 0; transform: scale(1.5); }
+  @keyframes breathe { 50% { transform: translateY(-7px) rotate(-1deg); } }
+
+  /* ---------- Окошко ---------- */
+  .card {
+    position: relative; width: min(100%, 29rem); text-align: center;
+    padding: clamp(2.2rem, 8vw, 3rem) clamp(1.4rem, 6vw, 2.4rem) clamp(1.8rem, 6vw, 2.4rem);
+    border-radius: 30px; border: 1.5px solid rgba(255, 255, 255, .95);
+    background: linear-gradient(180deg, rgba(255, 255, 255, .88), rgba(255, 255, 255, .6));
+    backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2);
+    box-shadow: 0 30px 70px -22px rgba(224, 82, 122, .45), 0 0 0 7px rgba(255, 255, 255, .35);
+  }
+  .card::before {
+    content: "♥"; position: absolute; top: -1.2rem; left: 50%; transform: translateX(-50%);
+    width: 2.4rem; height: 2.4rem; border-radius: 50%; display: grid; place-items: center;
+    background: radial-gradient(circle at 35% 30%, #f0709a, #c93a64); color: #fff; font-size: 1.05rem;
+    box-shadow: 0 8px 18px rgba(224, 82, 122, .5);
+  }
+  .t { font-family: var(--hand); font-size: clamp(1.55rem, 6.4vw, 1.9rem); line-height: 1.5; margin: 0 0 .9em; }
+  .t.hello { font-size: clamp(2.2rem, 9.5vw, 2.8rem); color: var(--rose-deep); margin-bottom: .45em; }
+  .sign { font-family: var(--hand); font-size: 1.9rem; text-align: right; margin: .2rem 0 0; color: var(--rose-deep); }
+  .title { font-family: var(--hand); font-weight: 400; font-size: clamp(1.9rem, 8vw, 2.4rem); line-height: 1.3; margin: 0; }
+  .title.big { font-size: clamp(2.4rem, 11vw, 3.6rem); text-shadow: 0 0 18px rgba(255, 255, 255, .95), 0 0 6px rgba(255, 255, 255, .9); }
+
+  .w { display: inline-block; opacity: 0; animation: ink .8s ease forwards; }
+  @keyframes ink { from { opacity: 0; filter: blur(5px); transform: translateY(5px); } to { opacity: 1; filter: none; transform: none; } }
+
+  /* ---------- Фото ---------- */
+  .arch {
+    width: min(64vw, 13.5rem); aspect-ratio: 4 / 5; margin: 0 auto 1.5rem; overflow: hidden;
+    border-radius: 999px 999px 28px 28px; border: 5px solid #fff;
+    box-shadow: 0 18px 40px -12px rgba(224, 82, 122, .55), 0 0 0 2px var(--petal);
+    background: linear-gradient(160deg, #ffd6e5, #e8d8ff); display: grid; place-items: center;
+  }
+  .arch img { width: 100%; height: 100%; object-fit: cover; display: block; animation: ink 1.2s ease both; }
+  .arch .ph { font-size: 3.2rem; color: #fff; opacity: .9; }
+
+  /* ---------- Кнопка «дальше» ---------- */
+  .actions { margin-top: 1.5rem; min-height: 3.6rem; display: flex; justify-content: center; }
+  .next {
+    position: relative; overflow: hidden; display: inline-flex; align-items: center; gap: .8rem;
+    padding: .5rem .5rem .5rem 1.7rem; border: 0; border-radius: 999px; cursor: pointer;
+    background: linear-gradient(135deg, #f46f9a, #d23c69); color: #fff;
+    font-family: var(--hand); font-size: 1.6rem; line-height: 1;
+    box-shadow: 0 14px 28px -8px rgba(210, 60, 105, .7);
+    opacity: 0; transform: translateY(10px); pointer-events: none;
+    transition: opacity .8s ease, transform .8s ease, box-shadow .3s ease;
+  }
+  .next.show { opacity: 1; transform: none; pointer-events: auto; animation: glow 2.6s ease-in-out 1s infinite; }
+  .next.show:hover { transform: translateY(-2px); }
+  .next .go {
+    width: 2.7rem; height: 2.7rem; border-radius: 50%; background: #fff; color: var(--rose);
+    display: grid; place-items: center; font-size: 1.25rem; animation: beat 1.6s ease-in-out infinite;
+  }
+  .next::after {
+    content: ""; position: absolute; top: 0; bottom: 0; width: 40%; left: -60%;
+    background: linear-gradient(100deg, transparent, rgba(255, 255, 255, .55), transparent);
+    transform: skewX(-20deg); animation: shine 3.4s ease-in-out 1.4s infinite;
+  }
+  @keyframes glow { 50% { box-shadow: 0 14px 38px -4px rgba(210, 60, 105, .95); } }
+  @keyframes beat { 50% { transform: scale(1.14); } }
+  @keyframes shine { 0%, 55% { left: -60%; } 100% { left: 130%; } }
+
+  /* ---------- Дождь комплиментов ---------- */
+  .rain { position: fixed; inset: 0; z-index: 2; overflow: hidden; pointer-events: none; transition: opacity .5s ease; }
+  .rain.fade { opacity: 0; }
+  .drop {
+    position: absolute; top: -12vh; left: 0; white-space: nowrap; font-family: var(--hand);
+    font-size: var(--s); color: var(--c); text-shadow: 0 0 12px rgba(255, 255, 255, .95);
+    animation: drop var(--d) linear forwards;
+  }
+  @keyframes drop { to { transform: translate3d(var(--x), 120vh, 0); } }
+  .cloud { display: flex; flex-wrap: wrap; justify-content: center; gap: .4rem 1.1rem; max-width: 34rem; font-family: var(--hand); font-size: 1.7rem; color: var(--rose-deep); }
+
+  /* ---------- Вопрос ---------- */
+  .ask { text-align: center; display: grid; gap: 2.2rem; justify-items: center; width: min(100%, 26rem); }
+  .ask .title { font-size: clamp(2.8rem, 13vw, 4.4rem); text-shadow: 0 0 18px rgba(255, 255, 255, .9); }
+  .answers { display: grid; gap: 1rem; width: 100%; }
+  .ans {
+    font-family: var(--hand); font-size: 1.55rem; line-height: 1.2; padding: .95rem 1.4rem; border-radius: 999px; cursor: pointer;
+    border: 2px solid var(--rose); background: rgba(255, 255, 255, .75); color: var(--rose-deep);
+    transition: transform .2s ease, background .2s ease, color .2s ease;
+  }
+  .ans:hover { background: var(--petal); transform: translateY(-2px); }
+  .ans.strong { background: linear-gradient(135deg, #f46f9a, #d23c69); color: #fff; border-color: transparent; box-shadow: 0 14px 28px -10px rgba(210, 60, 105, .7); }
+  .ans.strong:hover { background: linear-gradient(135deg, #f46f9a, #d23c69); }
+
+  /* ---------- Сердечки финала ---------- */
+  .heart {
+    position: fixed; bottom: -8vh; left: var(--l); z-index: 60; pointer-events: none; font-size: var(--s); line-height: 1;
+    opacity: 0; animation: rise var(--d) ease-out var(--dl) forwards;
+  }
+  @keyframes rise {
+    0% { opacity: 0; transform: translate3d(0, 0, 0) scale(.6); }
+    12% { opacity: 1; }
+    100% { opacity: 0; transform: translate3d(var(--x), -118vh, 0) scale(1.25); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .bg-heart { animation: none; bottom: auto; top: var(--t); }
+    .envelope, .next.show, .next .go, .next::after { animation: none; }
+    .w { animation: none; opacity: 1; }
+    .arch img { animation: none; }
+    .scene.enter, .scene.leave { animation: none; }
+    .env-flap, .intro, .next, .progress span { transition: none; }
+  }
+</style>
+</head>
+<body>
+<div id="bg" aria-hidden="true"></div>
+<div class="rain" id="rain" aria-hidden="true"></div>
+<div class="progress" id="progress" aria-hidden="true" hidden><span>♥</span><span>♥</span><span>♥</span><span>♥</span></div>
+
+<main>
+  <section class="intro" id="intro">
+    <p class="to" id="toLine"></p>
+    <button class="envelope" id="envelope" type="button" aria-label="Открыть письмо">
+      <span class="env-back"></span>
+      <span class="env-front"></span>
+      <span class="env-flap"></span>
+      <span class="seal" aria-hidden="true">♥</span>
+    </button>
+    <p class="hint">Нажми, чтобы открыть</p>
+  </section>
+
+  <!-- Окно 1: благодарность -->
+  <section class="scene" id="s0" hidden>
+    <div class="card">
+      <div id="letter"></div>
+      <p class="sign" id="sign"></p>
+      <div class="actions"></div>
+    </div>
+  </section>
+
+  <!-- Окно 2: глаза и фото -->
+  <section class="scene" id="s1" hidden>
+    <div class="card">
+      <div class="arch" id="arch"></div>
+      <h2 class="title" id="eyesTitle"></h2>
+      <div class="actions"></div>
+    </div>
+  </section>
+
+  <!-- Окно 3: дождь комплиментов -->
+  <section class="scene" id="s2" hidden>
+    <h2 class="title big" id="rainTitle"></h2>
+    <div class="cloud" id="cloud" hidden></div>
+    <p class="sr" id="srCompliments"></p>
+    <div class="actions"></div>
+  </section>
+
+  <!-- Окно 4: вопрос -->
+  <section class="scene" id="s3" hidden>
+    <div class="ask">
+      <h2 class="title" id="q"></h2>
+      <div class="answers" id="answers"></div>
+    </div>
+  </section>
+</main>
+
+<script>
+/* =====================================================
+   ЗДЕСЬ МЕНЯЕШЬ ТЕКСТ И ФОТО. Остальной код трогать не нужно.
+   ===================================================== */
+const CONFIG = {
+  name: "Муслима",
+  from: "",   // твоё имя для подписи внизу первого окна. Пусто = без подписи
+
+  /* Окно 1 (после приветствия с именем) */
+  letter: [
+    "лучшее, что произошло со мной за эти дни, это знакомство с тобой.",
+    "Я очень благодарен за это. Спасибо тебе, что ты есть."
+  ],
+  nextLabel: "Дальше",
+
+  /* Окно 2: загрузи фото в репозиторий и впиши точное имя файла
+     (латиницей, строчными буквами). Нет файла = красивая пустая рамка. */
+  eyesPhoto: "photo1.jpg",
+  eyesTitle: "Глаза, которые очаровали при первом же взгляде",
+
+  /* Окно 3 */
+  rainTitle: "Это всё о тебе",
+  compliments: [
+    "красивая", "нежная", "комфортная", "добрая", "умная", "искренняя", "тёплая", "особенная",
+    "невероятная", "милая", "лучезарная", "загадочная", "светлая", "настоящая", "заботливая",
+    "обаятельная", "душевная", "яркая", "спокойная", "очаровательная", "чуткая", "неповторимая",
+    "женственная", "грациозная", "скромная", "улыбчивая", "лёгкая", "притягательная", "утончённая",
+    "сказочная", "драгоценная", "трогательная", "уютная", "мудрая", "изящная", "волшебная",
+    "приятная", "вдохновляющая", "интересная"
+  ],
+
+  /* Окно 4 */
+  question: "Вам понравилось?",
+  answers: ["Да, понравилось", "Очень понравилось, спасибо тебе"],
+  end: [
+    "Я очень рад. Спасибо, что дочитала ❤",
+    "Мне очень приятно. Спасибо тебе ❤"
+  ]
+};
+
+/* ---------------- код ---------------- */
+const $ = (id) => document.getElementById(id);
+const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const rnd = (a, b) => a + Math.random() * (b - a);
+const scenes = [$("s0"), $("s1"), $("s2"), $("s3")];
+let cur = -1, busy = false, timers = [];
+
+const later = (fn, ms) => timers.push(setTimeout(fn, ms));
+const clearLater = () => { timers.forEach(clearTimeout); timers = []; };
+
+/* Фон: маленькие сердечки */
+(function makeBackground() {
+  const colors = ["#ff9fbd", "#ffb8cf", "#f27ba0", "#d9b8ff", "#ffc9a8"];
+  for (let i = 0; i < 26; i++) {
+    const h = document.createElement("span");
+    h.className = "bg-heart";
+    h.textContent = "♥";
+    const d = rnd(16, 32);
+    h.style.setProperty("--l", rnd(0, 97) + "vw");
+    h.style.setProperty("--t", rnd(3, 95) + "vh");
+    h.style.setProperty("--s", rnd(10, 24) + "px");
+    h.style.setProperty("--o", rnd(.3, .75).toFixed(2));
+    h.style.setProperty("--c", colors[i % colors.length]);
+    h.style.setProperty("--d", d + "s");
+    h.style.setProperty("--dl", -rnd(0, d) + "s");
+    h.style.setProperty("--x", rnd(-7, 7) + "vw");
+    $("bg").appendChild(h);
+  }
+})();
+
+/* Текст «пишется» слово за словом. Возвращает время окончания (сек) */
+function writeInto(el, text, delay) {
+  el.textContent = "";
+  const words = text.split(" ");
+  words.forEach((w, i) => {
+    const s = document.createElement("span");
+    s.className = "w";
+    s.textContent = w;
+    s.style.animationDelay = delay + "s";
+    delay += reduce ? 0 : 0.13;
+    el.appendChild(s);
+    if (i < words.length - 1) el.appendChild(document.createTextNode(" "));
+  });
+  return delay;
+}
+function showNext(scene, ms) {
+  later(() => { const b = scene.querySelector(".next"); if (b) b.classList.add("show"); }, reduce ? 0 : ms);
+}
+
+/* Подставляем тексты и кнопки «Дальше» */
+$("toLine").textContent = "Для тебя, " + CONFIG.name;
+$("eyesTitle").textContent = CONFIG.eyesTitle;
+$("rainTitle").textContent = CONFIG.rainTitle;
+$("q").textContent = CONFIG.question;
+$("srCompliments").textContent = "Ты: " + CONFIG.compliments.join(", ") + ".";
+document.querySelectorAll(".actions").forEach((a) => {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.className = "next";
+  b.innerHTML = '<span class="lbl"></span><span class="go" aria-hidden="true">♥</span>';
+  b.querySelector(".lbl").textContent = CONFIG.nextLabel;
+  b.addEventListener("click", () => { if (!busy) go(cur + 1); });
+  a.appendChild(b);
+});
+
+/* Фото в арке (если файла нет, остаётся красивая пустая рамка) */
+(function initPhoto() {
+  const arch = $("arch");
+  const ph = () => { arch.innerHTML = '<span class="ph" aria-hidden="true">♥</span>'; };
+  ph();
+  if (!CONFIG.eyesPhoto) return;
+  const im = new Image();
+  im.onload = () => { arch.innerHTML = ""; im.alt = "Твоё фото"; arch.appendChild(im); };
+  im.src = CONFIG.eyesPhoto;
+})();
+
+/* ---- Дождь ---- */
+let rainTimer = null, bag = [];
+const rainColors = ["#e0527a", "#b8335a", "#c06ad0", "#f0709a", "#9b7be0", "#e8845f"];
+function shuffle(a) { for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+function drop(initial) {
+  if (!bag.length) bag = shuffle([...CONFIG.compliments]);
+  const el = document.createElement("span");
+  const dur = rnd(6.5, 10);
+  el.className = "drop";
+  el.textContent = bag.pop();
+  el.style.setProperty("--s", rnd(1.3, 2.2) + "rem");
+  el.style.setProperty("--c", rainColors[Math.floor(Math.random() * rainColors.length)]);
+  el.style.setProperty("--d", dur + "s");
+  el.style.setProperty("--x", rnd(-5, 5) + "vw");
+  if (initial) el.style.animationDelay = -rnd(0, dur * .9) + "s";
+  el.addEventListener("animationend", () => el.remove());
+  $("rain").appendChild(el);
+  el.style.left = rnd(8, Math.max(9, window.innerWidth - el.offsetWidth - 8)) + "px";
+}
+function startRain() {
+  $("rain").classList.remove("fade");
+  if (reduce) {
+    const c = $("cloud");
+    c.hidden = false;
+    c.innerHTML = "";
+    CONFIG.compliments.forEach((w) => { const s = document.createElement("span"); s.textContent = w; c.appendChild(s); });
+    return;
+  }
+  for (let i = 0; i < 14; i++) drop(true);
+  rainTimer = setInterval(() => drop(false), 320);
+}
+function stopRain() {
+  clearInterval(rainTimer);
+  $("rain").classList.add("fade");
+  setTimeout(() => { $("rain").innerHTML = ""; }, 600);
+}
+
+/* ---- Сердечки финала ---- */
+function hearts(count) {
+  if (reduce) return;
+  const glyphs = ["❤️", "💖", "💗", "💕", "💘"];
+  for (let i = 0; i < count; i++) {
+    const h = document.createElement("span");
+    h.className = "heart";
+    h.textContent = glyphs[i % glyphs.length];
+    const dur = rnd(3.5, 6.5);
+    h.style.setProperty("--l", rnd(0, 96) + "vw");
+    h.style.setProperty("--s", rnd(18, 46) + "px");
+    h.style.setProperty("--d", dur + "s");
+    h.style.setProperty("--dl", rnd(0, 1.8) + "s");
+    h.style.setProperty("--x", rnd(-12, 12) + "vw");
+    document.body.appendChild(h);
+    setTimeout(() => h.remove(), (dur + 3) * 1000);
+  }
+}
+
+/* ---- Переходы между окнами ---- */
+const enter = [
+  function (s) {
+    const box = $("letter");
+    box.innerHTML = "";
+    let d = 0.3;
+    [CONFIG.name + ",", ...CONFIG.letter].forEach((text, i) => {
+      const p = document.createElement("p");
+      p.className = "t" + (i === 0 ? " hello" : "");
+      box.appendChild(p);
+      d = writeInto(p, text, d) + 0.3;
+    });
+    const sign = $("sign");
+    sign.textContent = "";
+    if (CONFIG.from) { writeInto(sign, CONFIG.from + " ♥", d); d += 0.8; }
+    showNext(s, d * 1000);
+  },
+  function (s) {
+    const end = writeInto($("eyesTitle"), CONFIG.eyesTitle, 0.6);
+    showNext(s, (end + 0.5) * 1000);
+  },
+  function (s) {
+    startRain();
+    showNext(s, 4500);
+  },
+  function () {
+    const answers = $("answers");
+    answers.innerHTML = "";
+    CONFIG.answers.forEach((label, i) => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "ans" + (i === 1 ? " strong" : "");
+      b.textContent = label;
+      b.addEventListener("click", () => finish(i));
+      answers.appendChild(b);
+    });
+    writeInto($("q"), CONFIG.question, 0.2);
+  }
+];
+
+function updateProgress() {
+  [...$("progress").children].forEach((h, i) => h.classList.toggle("on", i === cur));
+}
+
+function go(n) {
+  if (n >= scenes.length) return;
+  busy = true;
+  clearLater();
+  const prev = cur >= 0 ? scenes[cur] : null;
+  cur = n;
+  const wait = prev && !reduce ? 450 : 0;
+  if (prev) {
+    if (prev.id === "s2") stopRain();
+    prev.classList.remove("enter");
+    prev.classList.add("leave");
+    setTimeout(() => { prev.hidden = true; prev.classList.remove("leave"); }, wait);
+  }
+  setTimeout(() => {
+    const s = scenes[n];
+    s.hidden = false;
+    s.classList.add("enter");
+    window.scrollTo(0, 0);
+    updateProgress();
+    enter[n](s);
+    busy = false;
+  }, wait);
+}
+
+/* Открываем конверт */
+$("envelope").addEventListener("click", () => {
+  const env = $("envelope");
+  if (env.classList.contains("open")) return;
+  env.classList.add("open");
+  hearts(22);
+  setTimeout(() => $("intro").classList.add("gone"), reduce ? 0 : 1000);
+  setTimeout(() => {
+    $("intro").hidden = true;
+    $("progress").hidden = false;
+    go(0);
+  }, reduce ? 0 : 1700);
+});
+
+/* Ответ на вопрос: так всё и заканчивается */
+function finish(i) {
+  [...$("answers").children].forEach((b) => { b.disabled = true; });
+  $("answers").style.opacity = "0";
+  $("answers").style.transition = "opacity .5s ease";
+  setTimeout(() => { $("answers").hidden = true; }, 500);
+  writeInto($("q"), CONFIG.end[i], 0.4);
+  hearts(100);
+  setTimeout(() => hearts(60), 1800);
+}
+</script>
+</body>
+</html>
